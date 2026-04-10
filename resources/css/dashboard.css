@@ -1,0 +1,94 @@
+/* Custom Green Theme */
+:root {
+    --primary-green: #1a5d1a;
+    --dark-green: #144514;
+    --light-green: #f0f9f0;
+    --accent-green: #2ecc71;
+    --sidebar-width: 260px;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f7f6;
+    overflow-x: hidden;
+}
+
+/* Sidebar Styling */
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: var(--sidebar-width);
+    margin-left: -16.25rem;
+    transition: margin 0.25s ease-out;
+    background-color: var(--primary-green);
+    color: white;
+    position: fixed;
+    z-index: 1000;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 1.5rem 1.25rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+#sidebar-wrapper .list-group-item {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.8);
+    padding: 12px 20px;
+    transition: 0.3s;
+}
+
+#sidebar-wrapper .list-group-item:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+}
+
+#sidebar-wrapper .list-group-item.active {
+    background-color: var(--accent-green);
+    color: white;
+    border-radius: 5px;
+    margin: 0 10px;
+}
+
+/* Page Content Styling */
+#page-content-wrapper {
+    min-width: 100vw;
+    transition: margin 0.25s ease-out;
+    padding-left: 0;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: 0;
+}
+
+/* Responsive Adjustments */
+@media (min-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: 0;
+    }
+    #page-content-wrapper {
+        min-width: 0;
+        width: 100%;
+        margin-left: var(--sidebar-width);
+    }
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: calc(-1 * var(--sidebar-width));
+    }
+    #wrapper.toggled #page-content-wrapper {
+        margin-left: 0;
+    }
+}
+
+/* Card & Component Styling */
+.card-custom {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.navbar-custom {
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
