@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SI-PONDOK | @yield('title')</title>
+    <title>SI-NAJAH | @yield('title')</title>
+
+    <link rel="icon" type="image/png" href="{{ asset('storage/background/logo an-najah.png') }}">
     
     {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -15,22 +17,45 @@
         :root {
             --primary-green: #1a5d1a; /* Hijau Khas Pesantren */
             --accent-green: #2ecc71;
+            --dark-green: #144514;
         }
 
         body {
             background-color: #f4f7f6;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         /* Navbar Styling */
         .navbar-custom {
             background-color: var(--primary-green);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 0.5rem 1rem;
+        }
+
+        /* Logo & Brand Styling */
+        .logo-wrapper {
+            background-color: white; /* Memberikan kontras agar logo hijau terlihat */
+            padding: 4px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .logo-wrapper img {
+            width: 40px; 
+            height: 40px;
+            object-fit: contain;
         }
 
         .navbar-brand {
-            font-weight: 700;
+            font-weight: 800;
             letter-spacing: 1px;
+            font-size: 1.4rem;
         }
 
         .nav-link {
@@ -50,13 +75,24 @@
         .main-container {
             margin-top: 30px;
             margin-bottom: 50px;
+            flex: 1;
         }
 
-        /* Card Style */
-        .card-content {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        /* Footer Style */
+        .footer-custom {
+            background-color: white;
+            border-top: 1px solid #dee2e6; /* Garis lebih tipis */
+            padding: 15px 0; /* Padding dikurangi dari 25px ke 15px */
+            color: #6c757d;
+            font-size: 0.8rem; /* Ukuran teks lebih kecil */
+        }
+        .footer-text {
+            margin-bottom: 0;
+            letter-spacing: 0.3px;
+        }
+        .footer-brand {
+            color: var(--primary-green);
+            font-weight: 600;
         }
 
         /* Dropdown Style */
@@ -66,14 +102,27 @@
             border-radius: 12px;
             padding: 10px;
         }
+
+        @media (max-width: 768px) {
+            .logo-wrapper img {
+                width: 32px;
+                height: 32px;
+            }
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
     <div class="container">
-        <a class="navbar-brand" href="/">
-            <i class="fas fa-mosque me-2"></i>SI-PONDOK
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <div class="logo-wrapper me-2">
+                <img src="{{ asset('storage/background/logo an-najah.png') }}" alt="Logo SI-NAJAH">
+            </div>
+            <span>SI-NAJAH</span>
         </a>
         
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -118,33 +167,17 @@
                             <i class="fas fa-home me-1"></i> Dashboard
                         </a>
                     </li>
-                    {{-- Dropdown Kelola Pembayaran --}}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle {{ Request::is('bendahara/pembayaran*') ? 'active' : '' }}" href="#" id="pembayaranDrop" data-bs-toggle="dropdown">
                             <i class="fas fa-money-check-alt me-1"></i> Pembayaran
                         </a>
                         <ul class="dropdown-menu">
-                            <li>
-                                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ route('bendahara.pembayaran.index') }}">
-                                    <span><i class="fas fa-tasks me-2 text-primary"></i>Verifikasi Online</span>
-                                    {{-- Opsional: Tambahkan Badge jika ada variabel 'menunggu' yang dikirim ke semua view --}}
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('bendahara.pembayaran.manual') }}">
-                                    <i class="fas fa-cash-register me-2 text-success"></i>Input Bayar Manual
-                                </a>
-                            </li>
+                            <li><a class="dropdown-item" href="{{ route('bendahara.pembayaran.index') }}"><i class="fas fa-tasks me-2 text-primary"></i>Verifikasi Online</a></li>
+                            <li><a class="dropdown-item" href="{{ route('bendahara.pembayaran.manual') }}"><i class="fas fa-cash-register me-2 text-success"></i>Input Bayar Manual</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('bendahara.pembayaran.rekap') }}">
-                                    <i class="fas fa-file-invoice-dollar me-2 text-warning"></i>Rekap & Histori
-                                </a>
-                            </li>
+                            <li><a class="dropdown-item" href="{{ route('bendahara.pembayaran.rekap') }}"><i class="fas fa-file-invoice-dollar me-2 text-warning"></i>Rekap & Histori</a></li>
                         </ul>
                     </li>
-                    
-                    {{-- Menu Uang Saku --}}
                     <li class="nav-item">
                         <a class="nav-link {{ Request::is('bendahara/uang-saku*') ? 'active' : '' }}" href="{{ route('bendahara.uangsaku.index') }}">
                             <i class="fas fa-wallet me-1"></i> Uang Saku
@@ -155,9 +188,7 @@
                 {{-- MENU KHUSUS KEAMANAN --}}
                 @if(Auth::user()->role == 'keamanan')
                     <li class="nav-item">
-                        <a class="nav-link {{ Request::is('keamanan/dashboard') ? 'active' : '' }}" href="{{ route('keamanan.dashboard') }}">
-                             Dashboard
-                        </a>
+                        <a class="nav-link {{ Request::is('keamanan/dashboard') ? 'active' : '' }}" href="{{ route('keamanan.dashboard') }}">Dashboard</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ Request::is('keamanan/absensi-harian') ? 'active' : '' }}" href="{{ route('keamanan.absensi.harian') }}">
@@ -174,9 +205,7 @@
                 {{-- MENU KHUSUS USER/SANTRI --}}
                 @if(Auth::user()->role == 'user')
                     <li class="nav-item">
-                        <a class="nav-link {{ Request::is('user/dashboard') ? 'active' : '' }}" href="{{ route('user.dashboard') }}">
-                            Beranda
-                        </a>
+                        <a class="nav-link {{ Request::is('user/dashboard') ? 'active' : '' }}" href="{{ route('user.dashboard') }}">Beranda</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ Request::is('user/absensi*') ? 'active' : '' }}" href="{{ route('user.absensi.index') }}">
@@ -195,24 +224,13 @@
                         </ul>
                     </li>
                 @endif
-
-                {{-- LOGOUT UNTUK MODE MOBILE (Hanya muncul di layar kecil) --}}
-                <li class="nav-item d-lg-none border-top mt-2 pt-2">
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="nav-link text-danger border-0 bg-transparent w-100 text-start">
-                            <i class="fas fa-sign-out-alt me-1"></i> Keluar
-                        </button>
-                    </form>
-                </li>
             </ul>
 
-            {{-- MENU PROFIL UNTUK MODE DESKTOP --}}
-            <ul class="navbar-nav ms-auto d-none d-lg-block">
+            {{-- MENU PROFIL --}}
+            <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle btn btn-success px-3 py-1 text-white" href="#" data-bs-toggle="dropdown" style="border-radius: 20px;">
+                    <a class="nav-link dropdown-toggle btn btn-success px-3 py-1 text-white shadow-sm" href="#" data-bs-toggle="dropdown" style="border-radius: 20px;">
                         <i class="fas fa-user-circle me-1"></i> 
-                        {{-- Logika Nama: Jika User, tampilkan nama santri. Jika lainnya, tampilkan username --}}
                         @if(Auth::user()->role == 'user')
                             {{ Auth::user()->santri->nama ?? Auth::user()->name }}
                         @else
@@ -240,6 +258,15 @@
 <div class="container main-container">
     @yield('content')
 </div>
+
+<footer class="footer-custom mt-auto">
+    <div class="container text-center">
+        <p class="footer-text">
+            &copy; 2025 <span class="footer-brand">An-Najah</span>. 
+            Transparansi & Efisiensi Pengelolaan Santri.
+        </p>
+    </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

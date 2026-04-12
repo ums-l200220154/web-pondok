@@ -9,11 +9,12 @@ use App\Models\RincianPembayaran;
 use App\Models\UangSaku;
 use App\Models\JenisPembayaran;
 use Illuminate\Support\Facades\DB;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class PembayaranController extends Controller
 {
-    // ================= USER: FORM CREATE =================
-    // ================= USER: FORM CREATE =================
+    
 public function create(Request $request)
 {
     $user = auth()->user();
@@ -54,7 +55,7 @@ public function create(Request $request)
             return $items->pluck('jenis')->toArray();
         });
 
-    $listTahun = [now()->year, now()->year + 1];
+    $listTahun = [now()->year - 1,now()->year, now()->year + 1];
     $jenis = $allJenis;
 
     return view('user.pembayaran.pembayaran_create', compact(
@@ -280,57 +281,122 @@ public function createManual()
 }
 
     public function storeManual(Request $request)
-{
-    $request->validate([
-        'nis' => 'required',
-        'bulan' => 'required|array',
-        'rincian_bulan' => 'required|array',
-        'tahun' => 'required',
-        'status_manual' => 'required|in:lunas,belum lunas' // Input baru untuk status
-    ]);
-
-    DB::transaction(function () use ($request) {
-        $totalTagihan = 0;
-
-        // 1. Hitung total dari rincian per bulan
-        foreach ($request->bulan as $bulan) {
-            if (isset($request->rincian_bulan[$bulan])) {
-                foreach ($request->nominal_bulan[$bulan] as $nominal) {
-                    $totalTagihan += $nominal;
-                }
-            }
-        }
-
-        // 2. Buat Header Pembayaran
-        // Status diambil dari pilihan bendahara (lunas/belum lunas)
-        $pembayaran = Pembayaran::create([
-            'tanggal_pembayaran' => now(),
-            'jumlah' => $totalTagihan,
-            'total_bayar' => $totalTagihan,
-            'status' => $request->status_manual, 
-            'bukti' => 'manual_tunai.jpg',
-            'nis' => $request->nis,
-            'keterangan_bendahara' => $request->status_manual == 'lunas' 
-                ? 'Pembayaran Tunai (Lunas)' 
-                : 'Penerimaan Tunai Sebagian: ' . ($request->keterangan_admin ?? 'Tidak ada keterangan')
+    {
+        $request->validate([
+            'nis' => 'required',
+            'bulan' => 'required|array',
+            'rincian_bulan' => 'required|array',
+            'tahun' => 'required',
+            'status_manual' => 'required|in:lunas,belum lunas'
         ]);
 
-        // 3. Simpan Rincian detail per Bulan
-        foreach ($request->bulan as $bulan) {
-            if (isset($request->rincian_bulan[$bulan])) {
-                foreach ($request->rincian_bulan[$bulan] as $index => $namaJenis) {
-                    RincianPembayaran::create([
-                        'id_pembayaran' => $pembayaran->id_pembayaran,
-                        'jenis' => $namaJenis,
-                        'jumlah' => $request->nominal_bulan[$bulan][$index],
-                        'bulan' => $bulan,
-                        'tahun' => $request->tahun,
-                        'kategori' => 'pembayaran'
-                    ]);
+        $santri = Santri::where('nis', $request->nis)->firstOrFail();
+
+        return DB::transaction(function () use ($request, $santri) {
+            $totalTagihan = 0;
+
+            // 1. Hitung total dari rincian per bulan
+            foreach ($request->bulan as $bulan) {
+                if (isset($request->rincian_bulan[$bulan])) {
+                    foreach ($request->nominal_bulan[$bulan] as $nominal) {
+                        $totalTagihan += $nominal;
+                    }
                 }
             }
-        }
-    });
+
+            // 2. Buat Header Pembayaran
+            $pembayaran = Pembayaran::create([
+                'tanggal_pembayaran' => now(),
+                'jumlah' => $totalTagihan,
+                'total_bayar' => $totalTagihan,
+                'status' => $request->status_manual, 
+                'bukti' => null, // Akan diupdate setelah gambar digenerate
+                'nis' => $request->nis,
+                'keterangan_bendahara' => $request->status_manual == 'lunas' 
+                    ? 'Pembayaran Tunai (Lunas)' 
+                    : 'Penerimaan Tunai Sebagian: ' . ($request->keterangan_admin ?? '-')
+            ]);
+
+            // 3. Simpan Rincian detail per Bulan ke Database
+            foreach ($request->bulan as $bulan) {
+                if (isset($request->rincian_bulan[$bulan])) {
+                    foreach ($request->rincian_bulan[$bulan] as $index => $namaJenis) {
+                        RincianPembayaran::create([
+                            'id_pembayaran' => $pembayaran->id_pembayaran,
+                            'jenis' => $namaJenis,
+                            'jumlah' => $request->nominal_bulan[$bulan][$index],
+                            'bulan' => $bulan,
+                            'tahun' => $request->tahun,
+                            'kategori' => 'pembayaran'
+                        ]);
+                    }
+                }
+            }
+
+            // 4. GENERATE BUKTI PEMBAYARAN DARI TEMPLATE
+            try {
+                $manager = new ImageManager(new Driver());
+                $image = $manager->read(public_path('assets/img/template_bukti.jpg'));
+                
+                $fontPath = public_path('fonts/Roboto-Bold.ttf'); 
+                $color = '333333'; // Abu-abu gelap
+
+                // Tulis No. Pembayaran
+                $image->text($pembayaran->id_pembayaran, 385, 365, function($font) use ($fontPath, $color) {
+                    $font->file($fontPath); $font->size(22); $font->color($color);
+                });
+
+                // Tulis NIS
+                $image->text($santri->nis, 385, 410, function($font) use ($fontPath, $color) {
+                    $font->file($fontPath); $font->size(22); $font->color($color);
+                });
+
+                // Tulis Nama Santri
+                $image->text(strtoupper($santri->nama), 385, 455, function($font) use ($fontPath, $color) {
+                    $font->file($fontPath); $font->size(22); $font->color($color);
+                });
+
+                // Tulis Tanggal
+                $image->text(now()->format('d F Y'), 385, 500, function($font) use ($fontPath, $color) {
+                    $font->file($fontPath); $font->size(22); $font->color($color);
+                });
+
+                // Tulis Bulan/Tahun (Contoh: Januari, Februari 2026)
+                $txtBulan = ucfirst(implode(', ', $request->bulan)) . ' ' . $request->tahun;
+                $image->text($txtBulan, 385, 545, function($font) use ($fontPath, $color) {
+                    $font->file($fontPath); $font->size(18); $font->color($color);
+                });
+
+                // Tulis Total Nominal
+                $totalText = number_format($totalTagihan, 0, ',', '.');
+                $image->text($totalText, 660, 853, function($font) use ($fontPath, $color) {
+                    $font->file($fontPath); $font->size(32); $font->color($color);
+                });
+
+                // Simpan File
+                $fileName = 'bukti_manual_' . $pembayaran->id_pembayaran . '.jpg';
+                $dbPath = 'bukti/' . $fileName;
+                $fullPath = storage_path('app/public/' . $dbPath);
+
+                // Pastikan folder exist
+                if (!file_exists(storage_path('app/public/bukti'))) {
+                    mkdir(storage_path('app/public/bukti'), 0755, true);
+                }
+
+                $encoded = $image->toJpeg(90);
+                file_put_contents($fullPath, $encoded);
+
+                // Update path bukti di DB
+                $pembayaran->update(['bukti' => $dbPath]);
+
+            } catch (\Exception $e) {
+                // Jika gagal generate gambar, transaksi tetap lanjut tapi bukti kosong
+                // Log error bisa ditambahkan di sini
+            }
+
+            return redirect()->route('bendahara.pembayaran.index')
+                ->with('success', 'Pembayaran manual berhasil dicatat & Bukti dibuat.');
+        });
 
     return redirect()->route('bendahara.pembayaran.index')
         ->with('success', 'Pembayaran manual berhasil dicatat dengan status: ' . strtoupper($request->status_manual));

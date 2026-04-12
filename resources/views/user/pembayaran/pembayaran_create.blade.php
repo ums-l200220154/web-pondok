@@ -101,15 +101,18 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalRincianBulan" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+<div class="modal fade" id="modalRincianBulan" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-4">
             <div class="modal-header border-0 bg-success text-white">
                 <h5 class="modal-title fw-bold text-capitalize" id="titleBulanModal">Atur Rincian</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="list-rincian-modal"></div>
+            <div class="modal-body" id="list-rincian-modal">
+                </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-success w-100 rounded-pill fw-bold" id="btnSimpanRincian">Simpan Rincian</button>
+                <button type="button" class="btn btn-light rounded-pill fw-bold" data-bs-dismiss="modal">Kembali</button>
+                <button type="button" class="btn btn-success px-4 rounded-pill fw-bold" id="btnSimpanRincian">Simpan Rincian</button>
             </div>
         </div>
     </div>
@@ -135,13 +138,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const infoBulan = document.getElementById('info-bulan');
     const btnSubmit = document.getElementById('btn-submit');
     
-    const modal = new bootstrap.Modal(document.getElementById('modalRincianBulan'));
+    const modalElement = document.getElementById('modalRincianBulan');
+    const modal = new bootstrap.Modal(modalElement);
     const listRincianModal = document.getElementById('list-rincian-modal');
     const btnSimpanRincian = document.getElementById('btnSimpanRincian');
     const titleModal = document.getElementById('titleBulanModal');
+    
     let currentBulan = '';
+    let isSaved = false; // Flag untuk melacak apakah user menekan tombol simpan
 
     function openRincianModal(bulan) {
+        isSaved = false; // Reset status setiap modal dibuka
         currentBulan = bulan;
         titleModal.innerText = `Rincian: ${bulan}`;
         listRincianModal.innerHTML = '';
@@ -168,30 +175,46 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.show();
     }
 
+    // Event saat tombol Simpan di dalam modal ditekan
     btnSimpanRincian.addEventListener('click', function() {
         const selectedItems = Array.from(document.querySelectorAll('.item-check-modal:checked:not(:disabled)'));
         const hiddenContainer = document.getElementById(`hidden-inputs-${currentBulan}`);
-        const card = document.getElementById(`card_${currentBulan}`);
         
-        hiddenContainer.innerHTML = ''; 
         if (selectedItems.length === 0) {
-            document.getElementById(`m_${currentBulan}`).checked = false;
-            card.classList.remove('active');
-        } else {
-            selectedItems.forEach(item => {
-                hiddenContainer.innerHTML += `
-                    <input type="hidden" name="rincian_bulan[${currentBulan}][]" value="${item.value}">
-                    <input type="hidden" name="nominal_bulan[${currentBulan}][]" value="${item.dataset.nominal}">
-                `;
-            });
+            alert("Pilih minimal satu rincian pembayaran!");
+            return;
         }
+
+        isSaved = true; // Tandai bahwa user menekan tombol simpan
+        hiddenContainer.innerHTML = ''; 
+        selectedItems.forEach(item => {
+            hiddenContainer.innerHTML += `
+                <input type="hidden" name="rincian_bulan[${currentBulan}][]" value="${item.value}">
+                <input type="hidden" name="nominal_bulan[${currentBulan}][]" value="${item.dataset.nominal}">
+            `;
+        });
+        
         modal.hide();
         hitungTotal();
     });
 
+    // LOGIKA PEMBATALAN: Jika modal ditutup tanpa klik 'Simpan'
+    modalElement.addEventListener('hidden.bs.modal', function () {
+        if (!isSaved) {
+            const checkMain = document.getElementById(`m_${currentBulan}`);
+            const card = document.getElementById(`card_${currentBulan}`);
+            
+            // Batalkan centang pada form utama karena rincian tidak disimpan
+            checkMain.checked = false;
+            card.classList.remove('active');
+            document.getElementById(`hidden-inputs-${currentBulan}`).innerHTML = '';
+            
+            hitungTotal();
+        }
+    });
+
     function hitungTotal() {
         let totalRincian = 0;
-        // Hanya menghitung input nominal yang ada di DOM (dari bulan yang sedang dicentang)
         document.querySelectorAll('input[name^="nominal_bulan"]').forEach(input => {
             totalRincian += parseInt(input.value) || 0;
         });
@@ -236,9 +259,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     inputUangSaku.addEventListener('input', hitungTotal);
-    
-    // Cegah inisialisasi otomatis yang salah
-    // Kita hapus logika auto-check PHP dari JS agar user memicu modal secara manual
     hitungTotal();
 });
 </script>

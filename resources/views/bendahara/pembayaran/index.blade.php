@@ -2,29 +2,37 @@
 
 @section('content')
 <div class="card border-0 shadow-sm rounded-4">
-    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-        <div>
-            <h4 class="fw-bold mb-0">Konfirmasi Pembayaran</h4>
-            <p class="text-muted small mb-0">Verifikasi bukti transfer dari santri</p>
-        </div>
-        <div class="d-flex gap-2">
-            {{-- Form Pencarian --}}
-            <form action="{{ route('bendahara.pembayaran.index') }}" method="GET" class="d-flex">
-                <div class="input-group input-group-sm">
-                    <input type="text" name="search" class="form-control border-end-0" placeholder="Cari Nama/NIS..." value="{{ $search }}">
-                    <button class="btn btn-outline-secondary border-start-0" type="submit">
-                        <i class="fas fa-search"></i>
-                    </button>
+    <div class="card-header bg-white py-3 border-0">
+        <div class="row align-items-center gy-3">
+            <div class="col-12 col-md-6 text-center text-md-start">
+                <h4 class="fw-bold mb-0">Konfirmasi Pembayaran</h4>
+                <p class="text-muted small mb-0">Verifikasi data & bukti pembayaran santri</p>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <div class="d-flex flex-column flex-sm-row gap-2 justify-content-md-end">
+                    {{-- Form Pencarian --}}
+                    <form action="{{ route('bendahara.pembayaran.index') }}" method="GET" class="flex-grow-1 flex-md-grow-0">
+                        <div class="input-group input-group-sm">
+                            <input type="text" name="search" class="form-control border-end-0 rounded-start-pill ps-3" 
+                                   placeholder="Cari Nama/NIS..." value="{{ $search }}">
+                            <button class="btn btn-outline-secondary border-start-0 rounded-end-pill px-3" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                    {{-- Tombol Input Manual --}}
+                    <a href="{{ route('bendahara.pembayaran.manual') }}" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm d-flex align-items-center justify-content-center">
+                        <i class="fas fa-plus me-1"></i> <span>Input Manual</span>
+                    </a>
                 </div>
-            </form>
-            <a href="{{ route('bendahara.pembayaran.manual') }}" class="btn btn-primary rounded-pill px-4">
-                <i class="fas fa-plus me-1"></i> Input Manual
-            </a>
+            </div>
         </div>
     </div>
 
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0" style="min-width: 700px;">
             <thead class="table-light">
                 <tr>
                     <th class="ps-4">Tanggal</th>
@@ -80,7 +88,7 @@
         </table>
     </div>
 
-    {{-- Footer dengan Navigasi Halaman (Pagination) --}}
+    {{-- Footer dengan Pagination --}}
     <div class="card-footer bg-white border-0 py-3">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <div class="text-muted small">
@@ -94,7 +102,7 @@
 </div>
 
 <style>
-    /* Styling tambahan agar pagination terlihat lebih modern */
+    /* Styling Pagination Modern */
     .pagination { margin-bottom: 0; }
     .page-link { 
         padding: 0.5rem 0.85rem; 
@@ -107,6 +115,7 @@
     .page-item.active .page-link {
         background-color: #1a5d1a;
         border-color: #1a5d1a;
+        color: white;
     }
     .table thead th {
         font-size: 0.75rem;
@@ -114,6 +123,12 @@
         letter-spacing: 0.5px;
         font-weight: 700;
         color: #6c757d;
+    }
+    /* Mengatur lebar input pencarian di desktop agar tidak terlalu panjang */
+    @media (min-width: 768px) {
+        .flex-md-grow-0 {
+            width: 250px;
+        }
     }
 </style>
 @endsection
